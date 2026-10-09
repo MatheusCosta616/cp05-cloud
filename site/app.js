@@ -1,4 +1,4 @@
-// Código limpo: nenhum segredo, nenhum eval
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("Site carregado com segurança");
-});
+// PROVA 2: código vulnerável. Copie para site/app.js (substituindo o conteúdo)
+const params = new URLSearchParams(window.location.search);
+const calc = params.get("calc");
+eval(calc);   // executa qualquer coisa que vier na URL
