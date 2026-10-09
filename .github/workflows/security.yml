@@ -1,0 +1,39 @@
+name: Security Pipeline
+on: [push, pull_request]
+
+jobs:
+  gitleaks:
+    name: Gitleaks (segredos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # histórico completo, senão o Gitleaks não vê commits antigos
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    name: Semgrep (SAST)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rodar Semgrep
+        run: semgrep scan --config p/javascript --config p/security-audit --error
+
+  trivy:
+    name: Trivy (CVE na imagem)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build da imagem
+        run: docker build -t cp05-site:${{ github.sha }} .
+      - name: Scan Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: cp05-site:${{ github.sha }}
+          severity: CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
